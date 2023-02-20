@@ -3,10 +3,13 @@
     <ul>
       <li v-for="book in books" :key="book.id">
         <div class="details">
-          <h3>{{ book.title }}</h3>
+          <h3 @click="handleDelete(book)">{{ book.title }}</h3>
           <p>By {{ book.author }}</p>
         </div>
-        <div class="icon">
+        <div
+          :class="{ icon: true, fav: book.isFav }"
+          @click="handleUpdate(book)"
+        >
           <span class="material-icons">favorite</span>
         </div>
       </li>
@@ -18,14 +21,37 @@
 <script>
 import CreateBookForm from '../components/CreateBookForm';
 import getCollection from '../composables/getCollection';
+import getUser from '../composables/getUser';
+// firebase import
+import { db } from '../firebase/config';
+import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
 
 export default {
   name: 'Home',
   components: { CreateBookForm },
   setup() {
-    const { documents: books } = getCollection('books');
+    const { user } = getUser();
+    const { documents: books } = getCollection('books', [
+      'userUid',
+      '==',
+      user.value.uid,
+    ]);
 
-    return { books };
+    const handleDelete = (book) => {
+      const documentRef = doc(db, 'books', book.id);
+
+      deleteDoc(documentRef);
+    };
+
+    const handleUpdate = (book) => {
+      const documentRef = doc(db, 'books', book.id);
+
+      updateDoc(documentRef, {
+        isFav: !book.isFav,
+      });
+    };
+
+    return { books, handleDelete, handleUpdate };
   },
 };
 </script>
@@ -59,5 +85,8 @@ export default {
 .icon {
   color: #bbbbbb;
   cursor: pointer;
+}
+.icon.fav {
+  color: #f83f5e;
 }
 </style>

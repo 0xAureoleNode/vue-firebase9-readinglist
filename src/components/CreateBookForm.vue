@@ -3,30 +3,46 @@
     <h3>Add a New Book</h3>
 
     <label for="title">Book title:</label>
-    <input type="text" name="title" v-model="title" required>
+    <input type="text" name="title" v-model="title" required />
 
     <label for="author">Book author:</label>
-    <input type="text" name="author" v-model="author" required>
+    <input type="text" name="author" v-model="author" required />
 
     <button>Add Book</button>
   </form>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref } from 'vue';
+import getUser from '../composables/getUser';
+// firebase import
+import { db } from '../firebase/config';
+import { addDoc, collection } from 'firebase/firestore';
 
 export default {
   setup() {
-    const title = ref('')
-    const author = ref('')
+    const { user } = getUser();
+    const title = ref('');
+    const author = ref('');
 
     const handleSubmit = async () => {
-      console.log(title.value, author.value)
-    }
+      const collectionRef = collection(db, 'books');
 
-    return { handleSubmit, title, author }
-  }
-}
+      await addDoc(collectionRef, {
+        title: title.value,
+        author: author.value,
+        isFav: false,
+        userUid: user.value.uid,
+      });
+
+      // reset form
+      title.value = '';
+      author.value = '';
+    };
+
+    return { handleSubmit, title, author };
+  },
+};
 </script>
 
 <style>
